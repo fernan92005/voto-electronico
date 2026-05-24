@@ -1,0 +1,20 @@
+# Normaliza line endings: LF en el repo, CRLF en checkout en Windows si aplica.
+* text=auto eol=lf
+
+# Tipos explícitamente texto
+*.py        text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.ini       text eol=lf
+*.bib       text eol=lf
+*.tex       text eol=lf
+*.gitignore text eol=lf
+*.gitattributes text eol=lf
+
+# Scripts PowerShell con CRLF (convenio Windows)
+*.ps1       text eol=crlf
+
+# Binarios
+*.png       binary
+*.jpg       binary
+*.pdf       binary
