@@ -8,12 +8,15 @@ al menos un nodo de la cadena sea honesto.
 """
 from __future__ import annotations
 
+import logging
 import secrets
 from typing import List
 
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from src.crypto_utils import decrypt_layer
+
+logger = logging.getLogger(__name__)
 
 
 class MixNode:
@@ -29,6 +32,7 @@ class MixNode:
         Usa Fisher-Yates con :mod:`secrets` para la permutación uniforme
         criptográficamente segura.
         """
+        logger.info("peeling+shuffling lote de %d en nodo %s", len(batch), self.node_id)
         peeled = [decrypt_layer(c, self.privkey) for c in batch]
         n = len(peeled)
         # Fisher-Yates con aleatoriedad criptográfica

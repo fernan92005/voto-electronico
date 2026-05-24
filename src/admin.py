@@ -6,8 +6,12 @@ Firma ciegamente los ballots de votantes autorizados, garantizando
 """
 from __future__ import annotations
 
+import logging
+
 from src.crypto_utils import sign_blinded
 from src.types import RSAKey
+
+logger = logging.getLogger(__name__)
 
 
 class Admin:
@@ -32,8 +36,11 @@ class Admin:
         ``ValueError`` si ya fue servido.
         """
         if voter_id not in self.eligible:
+            logger.info("rechazado por no estar en whitelist: %s", voter_id)
             raise PermissionError(f"votante {voter_id} no autorizado")
         if voter_id in self.served:
+            logger.info("rechazado por doble voto: %s", voter_id)
             raise ValueError(f"votante {voter_id} ya fue servido")
+        logger.info("firmando ballot de %s", voter_id)
         self.served.add(voter_id)
         return sign_blinded(blinded, self.privkey)

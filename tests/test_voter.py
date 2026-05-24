@@ -51,3 +51,25 @@ def test_voter_blinded_value_does_not_equal_message(keys):
     v.prepare_ballot("A")
     v.blind_ballot()
     assert v.blinded != v.m  # propiedad blindness a nivel sintáctico
+
+
+def test_voter_emit_before_submit_raises(keys):
+    """emit_to_mixnet sin haber completado el flujo lanza RuntimeError."""
+    v = Voter("VX", keys["admin"]["pubkey_chaum"], [])
+    with pytest.raises(RuntimeError):
+        v.emit_to_mixnet()
+
+
+def test_voter_blind_before_prepare_raises(keys):
+    """blind_ballot antes de prepare_ballot lanza RuntimeError."""
+    v = Voter("VX", keys["admin"]["pubkey_chaum"], [])
+    with pytest.raises(RuntimeError):
+        v.blind_ballot()
+
+
+def test_voter_double_prepare_raises(keys):
+    """Llamar prepare_ballot dos veces consecutivas lanza RuntimeError."""
+    v = Voter("VX", keys["admin"]["pubkey_chaum"], [])
+    v.prepare_ballot("A")
+    with pytest.raises(RuntimeError):
+        v.prepare_ballot("B")

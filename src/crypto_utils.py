@@ -135,9 +135,16 @@ def ballot_to_int(candidate: str, nonce: bytes, modulus: int) -> int:
     """Mapea (candidato, nonce) a un entero en ``[0, modulus)`` mediante
     SHA-256.
 
-    Equivalente moral al esquema RSA-FDH: hashear antes de firmar evita
-    los ataques estructurales sobre RSA textbook y proporciona dominio
-    completo sobre ``Z_n``.
+    Esta función mitiga *parcialmente* los problemas de RSA textbook al
+    hashear el mensaje antes de firmarlo, en la línea del esquema
+    RSA-FDH (Full Domain Hash, Bellare-Rogaway 1996): el hash distribuye
+    el dominio de mensajes uniformemente sobre ``Z_n``, eliminando la
+    estructura algebraica que explotan los ataques de mensaje pequeño y
+    el forjado existencial. El nonce de 16 bytes garantiza además que
+    dos votos idénticos producen ballots distintos. La diferencia con
+    RSA-FDH puro es que SHA-256 tiene imagen de 256 bits frente a los
+    2048 de ``n``; en producción se usaría MGF1 o SHAKE para cubrir
+    todo ``Z_n``.
     """
     data = candidate.encode("utf-8") + b"|" + nonce
     digest = hashlib.sha256(data).digest()

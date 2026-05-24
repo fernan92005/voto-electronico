@@ -51,6 +51,8 @@ python demo/run_election.py
 | Eligibility | Sí (firma de A) |
 | Uniqueness | Sí (set de IDs servidos) |
 | Privacy | Sí (firma ciega + mixnet) |
+| Anti-replay en counter | Sí (de-duplicación por firma) |
+| State machine voter | Sí (excepciones, no asserts) |
 | Fairness | No (sin commitment) |
 | Universal verifiability | No (sin bulletin board) |
 | Receipt-freeness | No (votante conoce `r`) |

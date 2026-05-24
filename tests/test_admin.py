@@ -45,3 +45,11 @@ def test_admin_serves_multiple_distinct_voters(keys):
     s3 = admin.sign_blinded_ballot("V3", 300)
     assert s1 != s2 != s3
     assert admin.served == {"V1", "V2", "V3"}
+
+
+def test_admin_voter_set_grows_with_registration(keys):
+    """Registrar 3 votantes debe dejar admin.eligible con cardinalidad 3."""
+    admin = Admin(keys["privkey_chaum"])
+    for vid in ("VA", "VB", "VC"):
+        admin.register_voter(vid)
+    assert len(admin.eligible) == 3
