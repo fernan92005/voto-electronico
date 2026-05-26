@@ -5,7 +5,7 @@ Implementación didáctica de un esquema de voto electrónico que combina:
 - **Firma ciega de Chaum** sobre RSA — el administrador firma el voto sin verlo.
 - **Mixnet de descifrado de 2 nodos** — los votos firmados se mezclan antes de llegar al contador.
 
-> ⚠️ PoC educativo. Usa **RSA *textbook*** sin padding PKCS#1/OAEP en la firma ciega (necesario para que la propiedad multiplicativa funcione). No usar en producción.
+>PoC educativo. Usa **RSA *textbook*** sin padding PKCS#1/OAEP en la firma ciega (necesario para que la propiedad multiplicativa funcione). No usar en producción.
 
 ## Estructura
 
@@ -32,16 +32,37 @@ pip install -r requirements.txt
 
 ## Uso
 
-Ejecutar la batería de tests:
+### 1. Tests automáticos
 
 ```bash
-pytest -v
+cd C:\INGENIERO\Ciberseguridad\practicas\voto-electronico
+python -m pytest -v
 ```
 
-Ejecutar la demo de una elección completa:
+Verás los 29 tests con su resultado. Si quieres solo un módulo concreto:
 
 ```bash
+python -m pytest tests/test_counter.py -v
+python -m pytest tests/test_voter.py -v
+```
+
+### 2. La demo (elección completa end-to-end)
+
+```bash
+# Básico: 10 votantes, candidatos A y B
 python demo/run_election.py
+
+# Con semilla fija (resultado reproducible)
+python demo/run_election.py --voters 10 --seed 42
+
+# Más votantes y más candidatos
+python demo/run_election.py --voters 20 --candidates A,B,C --seed 7
+
+# Con logs internos visibles (ves cada firma, cada ballot)
+python demo/run_election.py --voters 5 --verbose
+
+# Claves más pequeñas = más rápido (solo para pruebas, no seguro)
+python demo/run_election.py --voters 5 --key-bits 1024
 ```
 
 ## Propiedades de seguridad
