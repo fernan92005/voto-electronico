@@ -2,7 +2,7 @@
 import pytest
 
 from src.admin import Admin
-from src.crypto_utils import ballot_to_int, generate_rsa_keypair, verify
+from src.crypto_utils import voto_a_entero, generate_rsa_keypair, verify
 from src.voter import Voter
 
 
@@ -21,12 +21,12 @@ def test_voter_full_flow(keys):
     mixnet_pubs = [keys["m1"]["pub"], keys["m2"]["pub"]]
     v = Voter("V1", keys["admin"]["pubkey_chaum"], mixnet_pubs)
 
-    v.prepare_ballot("A")
-    v.blind_ballot()
+    v.preparar_voto("A")
+    v.cegar_voto()
     sig = v.submit_to_admin(admin)
 
-    # La firma desciegada es válida sobre m = H(candidate||nonce)
-    m = ballot_to_int("A", v.nonce, keys["admin"]["pubkey_chaum"].n)
+    # La firma desciegada es válida sobre m = H(candidato||nonce)
+    m = voto_a_entero("A", v.nonce, keys["admin"]["pubkey_chaum"].n)
     assert verify(m, sig, keys["admin"]["pubkey_chaum"]) is True
 
 
@@ -35,8 +35,8 @@ def test_voter_emit_to_mixnet_produces_bytes(keys):
     admin.register_voter("V2")
     mixnet_pubs = [keys["m1"]["pub"], keys["m2"]["pub"]]
     v = Voter("V2", keys["admin"]["pubkey_chaum"], mixnet_pubs)
-    v.prepare_ballot("B")
-    v.blind_ballot()
+    v.preparar_voto("B")
+    v.cegar_voto()
     v.submit_to_admin(admin)
     ct = v.emit_to_mixnet()
     assert isinstance(ct, bytes)
@@ -48,9 +48,9 @@ def test_voter_blinded_value_does_not_equal_message(keys):
     admin.register_voter("V3")
     mixnet_pubs = [keys["m1"]["pub"], keys["m2"]["pub"]]
     v = Voter("V3", keys["admin"]["pubkey_chaum"], mixnet_pubs)
-    v.prepare_ballot("A")
-    v.blind_ballot()
-    assert v.blinded != v.m  # propiedad blindness a nivel sintáctico
+    v.preparar_voto("A")
+    v.cegar_voto()
+    assert v.blinded != v.m  # el cegado oculta el voto real
 
 
 def test_voter_emit_before_submit_raises(keys):
@@ -61,15 +61,15 @@ def test_voter_emit_before_submit_raises(keys):
 
 
 def test_voter_blind_before_prepare_raises(keys):
-    """blind_ballot antes de prepare_ballot lanza RuntimeError."""
+    """cegar_voto antes de preparar_voto lanza RuntimeError."""
     v = Voter("VX", keys["admin"]["pubkey_chaum"], [])
     with pytest.raises(RuntimeError):
-        v.blind_ballot()
+        v.cegar_voto()
 
 
 def test_voter_double_prepare_raises(keys):
-    """Llamar prepare_ballot dos veces consecutivas lanza RuntimeError."""
+    """Llamar preparar_voto dos veces seguidas lanza RuntimeError."""
     v = Voter("VX", keys["admin"]["pubkey_chaum"], [])
-    v.prepare_ballot("A")
+    v.preparar_voto("A")
     with pytest.raises(RuntimeError):
-        v.prepare_ballot("B")
+        v.preparar_voto("B")

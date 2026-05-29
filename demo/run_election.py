@@ -20,11 +20,11 @@ from src.voter import Voter  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Demo de voto electrónico con firma ciega de Chaum + mixnet"
+        description="Demo de voto electronico con firma ciega de Chaum + mixnet"
     )
     parser.add_argument(
         "--voters", type=int, default=10, metavar="N",
-        help="número de votantes (default: 10)",
+        help="numero de votantes (default: 10)",
     )
     parser.add_argument(
         "--candidates", type=str, default="A,B", metavar="A,B,...",
@@ -32,15 +32,15 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--key-bits", type=int, default=2048, metavar="N",
-        help="tamaño de las claves RSA en bits (default: 2048)",
+        help="tamano de las claves RSA en bits (default: 2048)",
     )
     parser.add_argument(
         "--seed", type=int, default=None, metavar="N",
-        help="semilla para reproducibilidad de la asignación de votos (default: None)",
+        help="semilla para reproducibilidad de la asignacion de votos (default: None)",
     )
     parser.add_argument(
         "--verbose", action="store_true",
-        help="activa logging INFO en todos los módulos src/",
+        help="activa logging INFO en todos los modulos src/",
     )
     return parser.parse_args()
 
@@ -56,12 +56,12 @@ def main() -> int:
         random.seed(args.seed)
 
     num_voters = args.voters
-    candidates = [c.strip() for c in args.candidates.split(",") if c.strip()]
+    candidatos = [c.strip() for c in args.candidates.split(",") if c.strip()]
 
     print("=" * 64)
-    print("  DEMO: voto electrónico con firma ciega de Chaum + mixnet")
+    print("  DEMO: voto electronico con firma ciega de Chaum + mixnet")
     print("=" * 64)
-    print(f"  Votantes: {num_voters}  |  Candidatos: {candidates}  |  Bits RSA: {args.key_bits}")
+    print(f"  Votantes: {num_voters}  |  Candidatos: {candidatos}  |  Bits RSA: {args.key_bits}")
 
     print(f"\n[setup] Generando claves RSA-{args.key_bits} para admin y 2 mixnodes...")
     t0 = time.perf_counter()
@@ -73,7 +73,7 @@ def main() -> int:
     admin = Admin(admin_keys["privkey_chaum"])
     m1 = MixNode("M1", m1_keys["priv"])
     m2 = MixNode("M2", m2_keys["priv"])
-    counter = Counter(admin_keys["pubkey_chaum"], candidates)
+    counter = Counter(admin_keys["pubkey_chaum"], candidatos)
 
     # ---------- Fase 1: registro ----------
     print("\n[fase 1] Registro de votantes")
@@ -85,68 +85,68 @@ def main() -> int:
         voters.append(v)
         print(f"   - {vid} registrado")
 
-    # ---------- Fase 2-3: firma ciega + emisión ----------
-    print("\n[fase 2-3] Cada votante: prepara ballot, ciega, firma con admin,")
-    print("           deciega y emite por mixnet (cifrado por capas)")
-    expected = {c: 0 for c in candidates}
-    batch: list[bytes] = []
-    t_blind_total = 0.0
-    t_emit_total = 0.0
+    # ---------- Fases 2-3: firma ciega + emision ----------
+    print("\n[fase 2-3] Cada votante prepara su voto, lo ciega, lo firma con el admin,")
+    print("           lo desciega y lo emite por la mixnet cifrado en capas")
+    esperado = {c: 0 for c in candidatos}
+    lote: list[bytes] = []
+    t_firma_total = 0.0
+    t_emision_total = 0.0
     for v in voters:
-        cand = random.choice(candidates)
-        expected[cand] += 1
+        cand = random.choice(candidatos)
+        esperado[cand] += 1
 
         t = time.perf_counter()
-        v.prepare_ballot(cand)
-        v.blind_ballot()
+        v.preparar_voto(cand)
+        v.cegar_voto()
         v.submit_to_admin(admin)
-        t_blind_total += time.perf_counter() - t
+        t_firma_total += time.perf_counter() - t
 
         t = time.perf_counter()
         ct = v.emit_to_mixnet()
-        t_emit_total += time.perf_counter() - t
-        batch.append(ct)
-        print(f"   - {v.voter_id} -> ballot cifrado en cebolla ({len(ct)} bytes)")
+        t_emision_total += time.perf_counter() - t
+        lote.append(ct)
+        print(f"   - {v.voter_id} -> voto cifrado en cebolla ({len(ct)} bytes)")
 
     # ---------- Fase 4: mezcla ----------
     print("\n[fase 4] Mezcla por cadena de mixnodes")
     t = time.perf_counter()
-    batch = m1.peel_and_shuffle(batch)
+    lote = m1.peel_and_shuffle(lote)
     t_m1 = time.perf_counter() - t
-    print(f"   - M1 pela capa y baraja: {len(batch)} mensajes en {t_m1*1000:.1f} ms")
+    print(f"   - M1 pela capa y baraja: {len(lote)} mensajes en {t_m1*1000:.1f} ms")
 
     t = time.perf_counter()
-    batch = m2.peel_and_shuffle(batch)
+    lote = m2.peel_and_shuffle(lote)
     t_m2 = time.perf_counter() - t
-    print(f"   - M2 pela capa y baraja: {len(batch)} mensajes en {t_m2*1000:.1f} ms")
+    print(f"   - M2 pela capa y baraja: {len(lote)} mensajes en {t_m2*1000:.1f} ms")
 
     # ---------- Fase 5: recuento ----------
     print("\n[fase 5] Recuento")
     t = time.perf_counter()
-    result = counter.tally(batch)
-    t_tally = time.perf_counter() - t
+    resultado = counter.contar(lote)
+    t_recuento = time.perf_counter() - t
 
     print("\n" + "=" * 64)
     print("  RESULTADO")
     print("=" * 64)
-    for cand in candidates:
-        print(f"   {cand}: {result[cand]} votos")
-    print(f"   Inválidos descartados: {counter.invalid_count}")
-    print(f"   Duplicados descartados: {counter.duplicate_count}")
+    for cand in candidatos:
+        print(f"   {cand}: {resultado[cand]} votos")
+    print(f"   Invalidos descartados: {counter.invalidos}")
+    print(f"   Duplicados descartados: {counter.duplicados}")
 
-    print(f"\n   Esperado (auditoría interna): {expected}")
-    print(f"   Obtenido del recuento:        {result}")
-    ok = expected == result
+    print(f"\n   Esperado (auditoria interna): {esperado}")
+    print(f"   Obtenido del recuento:        {resultado}")
+    ok = esperado == resultado
     print(f"   {'[OK] COINCIDE' if ok else '[FAIL] NO COINCIDE'}")
 
     print("\n" + "=" * 64)
-    print("  MÉTRICAS (tiempos medios)")
+    print("  METRICAS (tiempos medios)")
     print("=" * 64)
-    print(f"   Firma ciega (blind+submit+unblind): {t_blind_total*1000/num_voters:7.2f} ms/votante")
-    print(f"   Cifrado cebolla (2 capas):          {t_emit_total*1000/num_voters:7.2f} ms/votante")
-    print(f"   Mixnode M1 (lote de {num_voters}):           {t_m1*1000:7.2f} ms")
-    print(f"   Mixnode M2 (lote de {num_voters}):           {t_m2*1000:7.2f} ms")
-    print(f"   Recuento + verify (lote de {num_voters}):    {t_tally*1000:7.2f} ms")
+    print(f"   Firma ciega (cegar+enviar+desciegar): {t_firma_total*1000/num_voters:7.2f} ms/votante")
+    print(f"   Cifrado en cebolla (2 capas):         {t_emision_total*1000/num_voters:7.2f} ms/votante")
+    print(f"   Mixnode M1 (lote de {num_voters}):            {t_m1*1000:7.2f} ms")
+    print(f"   Mixnode M2 (lote de {num_voters}):            {t_m2*1000:7.2f} ms")
+    print(f"   Recuento + verificacion (lote de {num_voters}): {t_recuento*1000:7.2f} ms")
 
     return 0 if ok else 1
 

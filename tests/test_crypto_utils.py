@@ -4,7 +4,7 @@ import math
 import pytest
 
 from src.crypto_utils import (
-    ballot_to_int,
+    voto_a_entero,
     blind,
     decrypt_layer,
     encrypt_layer,
@@ -67,7 +67,7 @@ def test_verify_rejects_tampered_signature(keys):
     b = blind(m, r, pub)
     s = sign_blinded(b, priv)
     sig = unblind(s, r, pub)
-    tampered = sig ^ 1  # flipar último bit
+    tampered = sig ^ 1  # cambia el último bit
     assert not verify(m, tampered, pub)
 
 
@@ -75,7 +75,7 @@ def test_chaum_example_paper_numbers():
     """Validación con los números pedagógicos del paper (RSA juguete).
 
     p=7, q=11, n=77, e=13, d=37, m=19, r=2 deben producir b=31, s=59,
-    sig=68 y verify=True. Sirve como sanity check de la matemática.
+    sig=68 y verify=True. Sirve para comprobar que la matemática es correcta.
     """
     pub = RSAKey(n=77, exp=13)
     priv = RSAKey(n=77, exp=37)
@@ -98,12 +98,12 @@ def test_random_coprime_returns_coprime():
         assert 2 <= r <= n - 1
 
 
-def test_ballot_to_int_deterministic():
+def test_voto_a_entero_determinista():
     n = 2 ** 100  # módulo arbitrario
     nonce = b"\x01" * 16
-    a = ballot_to_int("CandidateA", nonce, n)
-    b = ballot_to_int("CandidateA", nonce, n)
-    c = ballot_to_int("CandidateB", nonce, n)
+    a = voto_a_entero("CandidateA", nonce, n)
+    b = voto_a_entero("CandidateA", nonce, n)
+    c = voto_a_entero("CandidateB", nonce, n)
     assert a == b
     assert a != c
 

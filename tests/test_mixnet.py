@@ -30,24 +30,24 @@ def test_election_end_to_end(keys):
         v = Voter(vid, keys["admin"]["pubkey_chaum"], [keys["m1"]["pub"], keys["m2"]["pub"]])
         cand = "A" if i % 2 == 0 else "B"
         expected[cand] += 1
-        v.prepare_ballot(cand)
-        v.blind_ballot()
+        v.preparar_voto(cand)
+        v.cegar_voto()
         v.submit_to_admin(admin)
         voters.append(v)
 
     # Recolecta cebollas
-    batch = [v.emit_to_mixnet() for v in voters]
+    lote = [v.emit_to_mixnet() for v in voters]
 
     # Pasa por la mixnet
-    batch = m1.peel_and_shuffle(batch)
-    batch = m2.peel_and_shuffle(batch)
+    lote = m1.peel_and_shuffle(lote)
+    lote = m2.peel_and_shuffle(lote)
 
     # Recuento
     counter = Counter(keys["admin"]["pubkey_chaum"], candidates=["A", "B"])
-    result = counter.tally(batch)
+    result = counter.contar(lote)
 
     assert result == expected
-    assert counter.invalid_count == 0
+    assert counter.invalidos == 0
 
 
 def test_mixnet_actually_shuffles(keys):
@@ -62,22 +62,16 @@ def test_mixnet_actually_shuffles(keys):
         vid = f"VS{i}"
         admin.register_voter(vid)
         v = Voter(vid, keys["admin"]["pubkey_chaum"], [keys["m1"]["pub"], keys["m2"]["pub"]])
-        v.prepare_ballot("A")
-        v.blind_ballot()
+        v.preparar_voto("A")
+        v.cegar_voto()
         v.submit_to_admin(admin)
         voters.append(v)
 
-    initial = [v.voter_id for v in voters]
-    batch = [v.emit_to_mixnet() for v in voters]
-    batch = m1.peel_and_shuffle(batch)
-    batch = m2.peel_and_shuffle(batch)
+    lote = [v.emit_to_mixnet() for v in voters]
+    lote = m1.peel_and_shuffle(lote)
+    lote = m2.peel_and_shuffle(lote)
 
-    # No podemos comparar IDs directamente (están ocultos), pero al menos
-    # comprobamos que las cebollas no salen iguales (sería sospechoso si
-    # ningún byte cambia tras dos shuffles).
-    assert len(batch) == 10
-    # El payload JSON sí permite extraer el orden de candidatos; aquí
-    # todos votan "A" así que no hay diversidad. Lo que validamos es que
-    # los bytes finales son distintos a la entrada (porque las capas se
-    # pelaron) y el lote tiene el mismo tamaño.
-    assert all(isinstance(b, bytes) for b in batch)
+    # Comprobamos que las cebollas no salen iguales (las capas se pelaron)
+    # y que el lote tiene el mismo tamaño.
+    assert len(lote) == 10
+    assert all(isinstance(b, bytes) for b in lote)

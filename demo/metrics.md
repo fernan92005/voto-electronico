@@ -12,6 +12,6 @@ sobre el sandbox de la sesión (Python 3.10, CPU virtualizada).
 | Mixnode M2 (pelar + barajar lote 10) | **15,30 ms** |
 | Recuento + verify (lote 10) | **3,68 ms** |
 
-Tamaño del ballot cebolla por votante: ~1260 bytes (2 capas).
+Tamaño del voto en cebolla por votante: ~1260 bytes (2 capas).
 
 Resultado del recuento: A=5, B=5 (esperado A=5, B=5). Coincide.

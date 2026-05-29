@@ -1,6 +1,6 @@
 """Cliente votante.
 
-Ejecuta el flujo completo del votante: preparación del ballot, cegado,
+Ejecuta el flujo completo del votante: preparación del voto, cegado,
 solicitud de firma al administrador, desciego de la firma y emisión por
 la mixnet con cifrado por capas.
 """
@@ -14,7 +14,7 @@ from typing import List
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from src.crypto_utils import (
-    ballot_to_int,
+    voto_a_entero,
     blind,
     encrypt_layer,
     random_coprime,
@@ -28,9 +28,9 @@ logger = logging.getLogger(__name__)
 class Voter:
     """Estado y operaciones de un votante individual.
 
-    El flujo obligatorio es lineal:
-    ``prepare_ballot`` → ``blind_ballot`` → ``submit_to_admin`` → ``emit_to_mixnet``.
-    Llamar a cualquier método fuera de su estado esperado lanza ``RuntimeError``.
+    El flujo es lineal y obligatorio:
+    ``preparar_voto`` → ``cegar_voto`` → ``submit_to_admin`` → ``emit_to_mixnet``.
+    Llamar a cualquier método fuera de su turno lanza ``RuntimeError``.
     """
 
     def __init__(
@@ -51,64 +51,64 @@ class Voter:
         self.blinded: int | None = None
         self.sig_admin: int | None = None
 
-    def _require_state(self, method: str, expected: str) -> None:
-        if self._state != expected:
+    def _require_state(self, metodo: str, esperado: str) -> None:
+        if self._state != esperado:
             raise RuntimeError(
-                f"no se puede llamar a {method} desde el estado {self._state}"
+                f"no se puede llamar a {metodo} desde el estado {self._state}"
             )
 
     # ------------------------------------------------------------------
     # Fase 2: firma ciega
     # ------------------------------------------------------------------
-    def prepare_ballot(self, candidate: str) -> None:
-        """Construye ``m = H(candidate || nonce) mod n``.
+    def preparar_voto(self, candidato: str) -> None:
+        """Construye ``m = H(candidato || nonce) mod n``.
 
-        Estado requerido: ``init`` → pasa a ``prepared``.
+        Estado requerido: ``init`` → pasa a ``preparado``.
         """
-        self._require_state("prepare_ballot", "init")
-        logger.info("preparando ballot para %s", candidate)
-        self.candidate = candidate
+        self._require_state("preparar_voto", "init")
+        logger.info("preparando voto para %s", candidato)
+        self.candidate = candidato
         self.nonce = secrets.token_bytes(16)
-        self.m = ballot_to_int(candidate, self.nonce, self.admin_pubkey.n)
-        self._state = "prepared"
+        self.m = voto_a_entero(candidato, self.nonce, self.admin_pubkey.n)
+        self._state = "preparado"
 
-    def blind_ballot(self) -> int:
-        """Cega ``m`` con un factor aleatorio coprimo con ``n``.
+    def cegar_voto(self) -> int:
+        """Ciega ``m`` con un factor aleatorio coprimo con ``n``.
 
-        Estado requerido: ``prepared`` → pasa a ``blinded``.
+        Estado requerido: ``preparado`` → pasa a ``cegado``.
         """
-        self._require_state("blind_ballot", "prepared")
+        self._require_state("cegar_voto", "preparado")
         self.r = random_coprime(self.admin_pubkey.n)
         self.blinded = blind(self.m, self.r, self.admin_pubkey)
-        self._state = "blinded"
+        self._state = "cegado"
         return self.blinded
 
     def submit_to_admin(self, admin) -> int:
-        """Envía el ballot cegado al admin, recibe la firma cegada, la
+        """Envía el voto cegado al admin, recibe la firma cegada, la
         deciega y devuelve la firma final del administrador sobre ``m``.
 
-        Estado requerido: ``blinded`` → pasa a ``signed``.
+        Estado requerido: ``cegado`` → pasa a ``firmado``.
         """
-        self._require_state("submit_to_admin", "blinded")
-        s = admin.sign_blinded_ballot(self.voter_id, self.blinded)
+        self._require_state("submit_to_admin", "cegado")
+        s = admin.firmar_voto_cegado(self.voter_id, self.blinded)
         self.sig_admin = unblind(s, self.r, self.admin_pubkey)
-        self._state = "signed"
+        self._state = "firmado"
         return self.sig_admin
 
     # ------------------------------------------------------------------
     # Fase 3: emisión por mixnet
     # ------------------------------------------------------------------
     def emit_to_mixnet(self) -> bytes:
-        """Construye la cebolla y devuelve el ciphertext final.
+        """Construye la cebolla y devuelve el mensaje cifrado final.
 
-        El payload interno es JSON con ``{candidate, nonce, sig}``. Se
+        El contenido interno es JSON con ``{candidate, nonce, sig}``. Se
         cifra desde el último nodo hacia el primero, de forma que cada
         nodo solo puede descifrar su capa.
 
-        Estado requerido: ``signed`` → pasa a ``emitted``.
+        Estado requerido: ``firmado`` → pasa a ``emitido``.
         """
-        self._require_state("emit_to_mixnet", "signed")
-        logger.info("emitiendo cebolla para votante %s", self.voter_id)
+        self._require_state("emit_to_mixnet", "firmado")
+        logger.info("emitiendo voto en cebolla para votante %s", self.voter_id)
         payload = json.dumps(
             {
                 "candidate": self.candidate,
@@ -119,5 +119,5 @@ class Voter:
         ct = payload
         for pk in reversed(self.mixnet_pubkeys):
             ct = encrypt_layer(ct, pk)
-        self._state = "emitted"
+        self._state = "emitido"
         return ct
