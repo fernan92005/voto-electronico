@@ -32,10 +32,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from src.types import RSAKey
 
-
-# ----------------------------------------------------------------------------
 # Generación de claves
-# ----------------------------------------------------------------------------
 
 def generate_rsa_keypair(bits: int = 2048) -> dict:
     """Genera un par de claves RSA.
@@ -70,7 +67,7 @@ def random_coprime(n: int) -> int:
     La coprimalidad es necesaria para que exista el inverso ``r^{-1} mod n``
     que necesita :func:`unblind`. Con primos grandes de RSA la probabilidad
     de encontrar un ``r`` no coprimo por azar es despreciable; el bucle de
-    reintento se incluye por completitud.
+    reintento se incluye por completitud
     """
     while True:
         r = secrets.randbelow(n - 2) + 2  # r en [2, n-1]
@@ -86,10 +83,10 @@ def blind(m: int, r: int, pubkey: RSAKey) -> int:
     """Ciega el mensaje ``m`` con el factor aleatorio ``r``.
 
     Devuelve ``b = m * r^e mod n``. El parámetro ``r`` debe ser coprimo con
-    ``n``; si no lo es se lanza ``ValueError``.
+    ``n``; si no lo es se lanza ``ValueError``
 
     El cegado oculta el contenido al firmante: dado ``b``, el firmante no
-    puede recuperar ``m`` porque ``r`` es secreto del votante.
+    puede recuperar ``m`` porque ``r`` es secreto del votante
     """
     if math.gcd(r, pubkey.n) != 1:
         raise ValueError("el factor de cegado r debe ser coprimo con n")
@@ -100,7 +97,7 @@ def sign_blinded(b: int, privkey: RSAKey) -> int:
     """Firma RSA estándar del mensaje cegado: ``s = b^d mod n``.
 
     El firmante no hace nada especial aquí. Toda la lógica del cegado
-    vive en el lado del votante (en :func:`blind` y :func:`unblind`).
+    vive en el lado del votante (en :func:`blind` y :func:`unblind`)
     """
     return pow(b, privkey.exp, privkey.n)
 
@@ -121,7 +118,7 @@ def verify(m: int, sig: int, pubkey: RSAKey) -> bool:
 
     Es la misma operación que se usaría para verificar una firma RSA
     normal; el verificador no distingue si la firma se produjo por el
-    método ciego o directamente.
+    método ciego o directamente
     """
     return pow(sig, pubkey.exp, pubkey.n) == (m % pubkey.n)
 
@@ -143,7 +140,7 @@ def voto_a_entero(candidato: str, nonce: bytes, modulo: int) -> int:
     dos votos al mismo candidato producen valores distintos. La diferencia
     con RSA-FDH puro es que SHA-256 tiene imagen de 256 bits frente a los
     2048 de ``n``; en producción se usaría MGF1 o SHAKE para cubrir
-    todo ``Z_n``.
+    todo ``Z_n``
     """
     data = candidato.encode("utf-8") + b"|" + nonce
     digest = hashlib.sha256(data).digest()
@@ -166,7 +163,7 @@ def encrypt_layer(plaintext: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
 
     El contenido se cifra con AES-GCM bajo una clave AES aleatoria;
     esa clave se cifra con la clave pública del nodo usando RSA-OAEP.
-    El resultado se serializa como ``longitud || rsa_ct || iv || aes_ct``.
+    El resultado se serializa como longitud || rsa_ct || iv || aes_ct
     """
     aes_key = secrets.token_bytes(32)
     iv = secrets.token_bytes(12)
@@ -176,7 +173,7 @@ def encrypt_layer(plaintext: bytes, pubkey: rsa.RSAPublicKey) -> bytes:
 
 
 def decrypt_layer(ciphertext: bytes, privkey: rsa.RSAPrivateKey) -> bytes:
-    """Inversa de :func:`encrypt_layer`."""
+    """Inversa de :func:encrypt_layer"""
     (rsa_ct_len,) = struct.unpack(">H", ciphertext[:2])
     rsa_ct = ciphertext[2:2 + rsa_ct_len]
     rest = ciphertext[2 + rsa_ct_len:]

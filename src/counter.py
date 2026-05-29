@@ -8,7 +8,7 @@ los votos válidos por candidato.
 El método contar() es resistente a mensajes mal formados (JSON inválido,
 campos que faltan, nonce no-hex, tipo inesperado): los descarta sin lanzar
 excepción y los contabiliza en "invalidos". Los votos duplicados se
-contabilizan en "duplicados" y se descartan.
+contabilizan en "duplicados" y se descartan
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 class Counter:
-    """Contador electoral con verificación de firma y detección de replay."""
+    """Contador electoral con verificación de firma y detección de replay"""
 
     def __init__(self, admin_pubkey: RSAKey, candidates: List[str]) -> None:
         self.admin_pubkey = admin_pubkey
@@ -40,7 +40,7 @@ class Counter:
         Este método es resistente a mensajes mal formados (JSON inválido,
         campos que faltan, nonce no-hex, tipo inesperado): los descarta sin lanzar
         excepción y los contabiliza en "invalidos". Los votos duplicados se
-        contabilizan en "duplicados" y se descartan.
+        contabilizan en "duplicados" y se descartan
                 """
 
         for i, item in enumerate(lote):
@@ -52,7 +52,7 @@ class Counter:
                 self.invalidos += 1
                 continue
 
-            # --- Comprobación de campos obligatorios ---
+            #  Comprobación de campos obligatorios 
             if not {"candidate", "nonce", "sig"}.issubset(payload.keys()):
                 logger.info("voto %d descartado: faltan campos", i)
                 self.invalidos += 1
@@ -67,20 +67,20 @@ class Counter:
                 self.invalidos += 1
                 continue
 
-            # --- Detección de voto duplicado ---
+            # Detección de voto duplicado
             if sig in self._firmas_vistas:
                 logger.info("voto %d descartado: firma duplicada", i)
                 self.duplicados += 1
                 continue
             self._firmas_vistas.add(sig)
 
-            # --- Candidato válido ---
+            # Candidato válido
             if candidato not in self.candidates:
                 logger.info("voto %d descartado: candidato desconocido '%s'", i, candidato)
                 self.invalidos += 1
                 continue
 
-            # --- Verificación de firma ---
+            # Verificación de firma
             m = voto_a_entero(candidato, nonce, self.admin_pubkey.n)
             if verify(m, sig, self.admin_pubkey):
                 logger.info("voto %d válido -> %s", i, candidato)

@@ -35,8 +35,8 @@ class Admin:
         """Firma un voto cegado tras comprobar que el votante está
         registrado y que no ha votado ya.
 
-        Lanza ``PermissionError`` si el votante no está en la lista y
-        ``ValueError`` si ya votó.
+        Lanza PermissionError si el votante no está en la lista y
+        ValueError si ya votó
         """
         if voter_id not in self.eligible:
             logger.info("rechazado por no estar en la lista: %s", voter_id)

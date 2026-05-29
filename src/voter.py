@@ -1,8 +1,8 @@
-"""Cliente votante.
+"""Cliente votante
 
 Ejecuta el flujo completo del votante: preparación del voto, cegado,
 solicitud de firma al administrador, desciego de la firma y emisión por
-la mixnet con cifrado por capas.
+la mixnet con cifrado por capas
 """
 from __future__ import annotations
 
@@ -57,9 +57,9 @@ class Voter:
                 f"no se puede llamar a {metodo} desde el estado {self._state}"
             )
 
-    # ------------------------------------------------------------------
-    # Fase 2: firma ciega
-    # ------------------------------------------------------------------
+     
+    # Firma ciega
+
     def preparar_voto(self, candidato: str) -> None:
         """Construye ``m = H(candidato || nonce) mod n``.
 
@@ -95,9 +95,8 @@ class Voter:
         self._state = "firmado"
         return self.sig_admin
 
-    # ------------------------------------------------------------------
-    # Fase 3: emisión por mixnet
-    # ------------------------------------------------------------------
+# Emisión de mixnet
+
     def emit_to_mixnet(self) -> bytes:
         """Construye la cebolla y devuelve el mensaje cifrado final.
 
