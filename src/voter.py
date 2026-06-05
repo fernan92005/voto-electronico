@@ -29,8 +29,8 @@ class Voter:
     """Estado y operaciones de un votante individual.
 
     El flujo es lineal y obligatorio:
-    ``preparar_voto`` → ``cegar_voto`` → ``submit_to_admin`` → ``emit_to_mixnet``.
-    Llamar a cualquier método fuera de su turno lanza ``RuntimeError``.
+    preparar_voto → cegar_voto → submit_to_admin → emit_to_mixnet.
+    Llamar a cualquier método fuera de su turno lanza RuntimeError
     """
 
     def __init__(
@@ -61,9 +61,9 @@ class Voter:
     # Firma ciega
 
     def preparar_voto(self, candidato: str) -> None:
-        """Construye ``m = H(candidato || nonce) mod n``.
+        """Construye m = H(candidato || nonce) mod n.
 
-        Estado requerido: ``init`` → pasa a ``preparado``.
+        Estado requerido: init → pasa a preparado.
         """
         self._require_state("preparar_voto", "init")
         logger.info("preparando voto para %s", candidato)
@@ -73,9 +73,9 @@ class Voter:
         self._state = "preparado"
 
     def cegar_voto(self) -> int:
-        """Ciega ``m`` con un factor aleatorio coprimo con ``n``.
+        """Ciega m con un factor aleatorio coprimo con n.
 
-        Estado requerido: ``preparado`` → pasa a ``cegado``.
+        Estado requerido: preparado → pasa a cegado.
         """
         self._require_state("cegar_voto", "preparado")
         self.r = random_coprime(self.admin_pubkey.n)
@@ -85,9 +85,9 @@ class Voter:
 
     def submit_to_admin(self, admin) -> int:
         """Envía el voto cegado al admin, recibe la firma cegada, la
-        deciega y devuelve la firma final del administrador sobre ``m``.
+        deciega y devuelve la firma final del administrador sobre m.
 
-        Estado requerido: ``cegado`` → pasa a ``firmado``.
+        Estado requerido: cegado → pasa a firmado.
         """
         self._require_state("submit_to_admin", "cegado")
         s = admin.firmar_voto_cegado(self.voter_id, self.blinded)
@@ -100,11 +100,11 @@ class Voter:
     def emit_to_mixnet(self) -> bytes:
         """Construye la cebolla y devuelve el mensaje cifrado final.
 
-        El contenido interno es JSON con ``{candidate, nonce, sig}``. Se
+        El contenido interno es JSON con {candidate, nonce, sig}. Se
         cifra desde el último nodo hacia el primero, de forma que cada
         nodo solo puede descifrar su capa.
 
-        Estado requerido: ``firmado`` → pasa a ``emitido``.
+        Estado requerido: firmado → pasa a emitido.
         """
         self._require_state("emit_to_mixnet", "firmado")
         logger.info("emitiendo voto en cebolla para votante %s", self.voter_id)

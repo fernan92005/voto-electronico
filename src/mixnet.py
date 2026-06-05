@@ -1,4 +1,4 @@
-"""Nodo de mezcla (mixnode).
+"""Nodo de mezcla (mixnode)
 
 Cada nodo recibe un lote de mensajes cifrados, descifra su capa, permuta
 aleatoriamente el lote y lo reenvía. La permutación destruye la

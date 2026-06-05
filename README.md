@@ -40,10 +40,6 @@ voto-electronico/
 ├── demo/
 │   ├── run_election.py   # Demo completa con argumentos configurables
 │   └── metrics.md        # Métricas de rendimiento
-├── docs/
-│   ├── spec.md           # Especificación del protocolo
-│   ├── diagrams.md       # Diagramas del sistema
-│   └── threat_model.md   # Modelo de amenazas
 ├── README.md
 ├── requirements.txt
 └── pytest.ini

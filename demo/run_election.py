@@ -20,7 +20,7 @@ from src.voter import Voter  # noqa: E402
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Demo de voto electronico con firma ciega de Chaum + mixnet"
+        description="Demo de voto electronico con firma ciega + mixnet"
     )
     parser.add_argument(
         "--voters", type=int, default=10, metavar="N",
@@ -70,22 +70,22 @@ def main() -> int:
     m2_keys = generate_rsa_keypair(bits=args.key_bits)
     print(f"[setup] Claves listas en {time.perf_counter()-t0:.2f}s")
 
-    admin = Admin(admin_keys["privkey_chaum"])
+    admin = Admin(admin_keys["privkey"])
     m1 = MixNode("M1", m1_keys["priv"])
     m2 = MixNode("M2", m2_keys["priv"])
-    counter = Counter(admin_keys["pubkey_chaum"], candidatos)
+    counter = Counter(admin_keys["pubkey"], candidatos)
 
-    # ---------- Fase 1: registro ----------
+    # Fase 1: registro 
     print("\n[fase 1] Registro de votantes")
     voters = []
     for i in range(num_voters):
         vid = f"V{i:02d}"
         admin.register_voter(vid)
-        v = Voter(vid, admin_keys["pubkey_chaum"], [m1_keys["pub"], m2_keys["pub"]])
+        v = Voter(vid, admin_keys["pubkey"], [m1_keys["pub"], m2_keys["pub"]])
         voters.append(v)
         print(f"   - {vid} registrado")
 
-    # ---------- Fases 2-3: firma ciega + emision ----------
+    # Fases 2-3: firma ciega + emision
     print("\n[fase 2-3] Cada votante prepara su voto, lo ciega, lo firma con el admin,")
     print("           lo desciega y lo emite por la mixnet cifrado en capas")
     esperado = {c: 0 for c in candidatos}
@@ -108,7 +108,7 @@ def main() -> int:
         lote.append(ct)
         print(f"   - {v.voter_id} -> voto cifrado en cebolla ({len(ct)} bytes)")
 
-    # ---------- Fase 4: mezcla ----------
+    # Fase 4: mezcla 
     print("\n[fase 4] Mezcla por cadena de mixnodes")
     t = time.perf_counter()
     lote = m1.peel_and_shuffle(lote)
@@ -120,7 +120,7 @@ def main() -> int:
     t_m2 = time.perf_counter() - t
     print(f"   - M2 pela capa y baraja: {len(lote)} mensajes en {t_m2*1000:.1f} ms")
 
-    # ---------- Fase 5: recuento ----------
+    # Fase 5: recuento 
     print("\n[fase 5] Recuento")
     t = time.perf_counter()
     resultado = counter.contar(lote)

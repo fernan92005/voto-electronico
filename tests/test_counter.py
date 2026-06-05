@@ -16,9 +16,9 @@ def keys():
 
 def _voto_valido(keys) -> bytes:
     """Helper: crea un mensaje JSON válido y firmado."""
-    admin = Admin(keys["privkey_chaum"])
+    admin = Admin(keys["privkey"])
     admin.register_voter("VC1")
-    v = Voter("VC1", keys["pubkey_chaum"], [])
+    v = Voter("VC1", keys["pubkey"], [])
     v.preparar_voto("A")
     v.cegar_voto()
     v.submit_to_admin(admin)
@@ -33,7 +33,7 @@ def test_counter_rejects_duplicate_signature(keys):
     """El mismo voto enviado dos veces: el segundo se descarta como
     duplicado y duplicados debe ser 1."""
     payload = _voto_valido(keys)
-    counter = Counter(keys["pubkey_chaum"], ["A", "B"])
+    counter = Counter(keys["pubkey"], ["A", "B"])
     counter.contar([payload, payload])
     assert counter.duplicados == 1
     assert counter.resultado["A"] == 1  # el primero es válido
@@ -41,14 +41,14 @@ def test_counter_rejects_duplicate_signature(keys):
 
 def test_counter_rejects_malformed_json(keys):
     """Un mensaje que no es JSON válido cuenta como inválido."""
-    counter = Counter(keys["pubkey_chaum"], ["A", "B"])
+    counter = Counter(keys["pubkey"], ["A", "B"])
     counter.contar([b"not valid json {["])
     assert counter.invalidos == 1
 
 
 def test_counter_rejects_unknown_candidate(keys):
     """Un candidato que no está en la lista cuenta como inválido."""
-    counter = Counter(keys["pubkey_chaum"], ["A", "B"])
+    counter = Counter(keys["pubkey"], ["A", "B"])
     payload = json.dumps({
         "candidate": "Z",
         "nonce": "aabbccdd",
@@ -60,7 +60,7 @@ def test_counter_rejects_unknown_candidate(keys):
 
 def test_counter_rejects_missing_fields(keys):
     """JSON válido pero sin el campo 'sig' cuenta como inválido."""
-    counter = Counter(keys["pubkey_chaum"], ["A", "B"])
+    counter = Counter(keys["pubkey"], ["A", "B"])
     payload = json.dumps({"candidate": "A", "nonce": "aabbccdd"}).encode()
     counter.contar([payload])
     assert counter.invalidos == 1

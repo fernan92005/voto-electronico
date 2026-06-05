@@ -4,7 +4,7 @@ from dataclasses import dataclass
 
 @dataclass(frozen=True)
 class RSAKey:
-    """Representación mínima de una clave RSA para Chaum
+    """Representación mínima de una clave RSA
 
     Se usa la misma estructura para clave pública (exp = e) y privada (exp = d).
     Las operaciones de firma ciega trabajan directamente con (n, exp) sin

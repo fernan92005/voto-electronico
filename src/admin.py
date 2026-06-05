@@ -1,10 +1,8 @@
 """
-Administrador electoral.
+Administrador electoral
 
 Mantiene la lista de votantes elegibles y un registro de los que ya
-han votado. Firma ciegamente los votos de votantes autorizados,
-garantizando que solo voten quienes tienen derecho y que cada uno
-lo haga una sola vez.
+han votado. Firma ciegamente los votos de votantes autorizados
 """
 from __future__ import annotations
 
@@ -17,9 +15,9 @@ logger = logging.getLogger(__name__)
 
 
 class Admin:
-    """Autoridad de registro y firma ciega.
+    """Autoridad de registro y firma ciega
 
-    Posee la clave privada ``d`` que firma los votos cegados.
+    Posee la clave privada d que firma los votos cegados
     """
 
     def __init__(self, privkey: RSAKey) -> None:
@@ -28,12 +26,12 @@ class Admin:
         self.served: set[str] = set()
 
     def register_voter(self, voter_id: str) -> None:
-        """Añade un votante a la lista de elegibles."""
+        """Añade un votante a la lista de elegibles"""
         self.eligible.add(voter_id)
 
     def firmar_voto_cegado(self, voter_id: str, blinded: int) -> int:
         """Firma un voto cegado tras comprobar que el votante está
-        registrado y que no ha votado ya.
+        registrado y que no ha votado ya
 
         Lanza PermissionError si el votante no está en la lista y
         ValueError si ya votó

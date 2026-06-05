@@ -23,14 +23,14 @@ def keys():
 
 
 def test_keypair_generation(keys):
-    assert keys["pubkey_chaum"].exp == 65537
-    assert keys["privkey_chaum"].n == keys["pubkey_chaum"].n
-    assert keys["pubkey_chaum"].n.bit_length() >= 2047
+    assert keys["pubkey"].exp == 65537
+    assert keys["privkey"].n == keys["pubkey"].n
+    assert keys["pubkey"].n.bit_length() >= 2047
 
 
 def test_blind_sign_unblind_verify_roundtrip(keys):
-    pub = keys["pubkey_chaum"]
-    priv = keys["privkey_chaum"]
+    pub = keys["pubkey"]
+    priv = keys["privkey"]
     m = 12345678901234567890
     r = random_coprime(pub.n)
     b = blind(m, r, pub)
@@ -40,7 +40,7 @@ def test_blind_sign_unblind_verify_roundtrip(keys):
 
 
 def test_signer_does_not_see_message(keys):
-    pub = keys["pubkey_chaum"]
+    pub = keys["pubkey"]
     m = 42
     r1 = random_coprime(pub.n)
     r2 = random_coprime(pub.n)
@@ -60,8 +60,8 @@ def test_invalid_blinding_factor_raises():
 
 
 def test_verify_rejects_tampered_signature(keys):
-    pub = keys["pubkey_chaum"]
-    priv = keys["privkey_chaum"]
+    pub = keys["pubkey"]
+    priv = keys["privkey"]
     m = 7777777
     r = random_coprime(pub.n)
     b = blind(m, r, pub)
